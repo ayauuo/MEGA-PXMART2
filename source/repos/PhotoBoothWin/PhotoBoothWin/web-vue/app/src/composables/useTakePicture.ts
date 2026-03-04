@@ -86,8 +86,9 @@ export function useTakePicture(selectedTemplate: () => Template | null) {
     let h: number
     try {
       const size = await loadFrameDimensions(url)
-      w = size.w
-      h = size.h
+      // 讀到框圖實際大小後，依需求放大 1.2 倍顯示
+      w = Math.round(size.w * 2.5)
+      h = Math.round(size.h * 2.5)
     } catch {
       const fallback = getTemplateCaptureSize()
       w = fallback.w
