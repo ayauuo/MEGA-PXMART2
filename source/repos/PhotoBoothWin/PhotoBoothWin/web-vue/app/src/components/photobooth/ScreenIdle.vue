@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import SecretKeypad from '@/components/photobooth/SecretKeypad.vue'
 import { usePhotobooth } from '@/composables/usePhotobooth'
 import { unlockCountdownAudio } from '@/composables/useTakePicture'
@@ -46,6 +46,17 @@ function stopCarousel() {
 // 一觸碰螢幕就直接選 bk01 並進入拍照頁
 const photobooth = usePhotobooth()
 const hasStarted = ref(false)
+const { currentScreen } = photobooth
+
+// 每次畫面真正回到 idle 時，允許重新開始下一輪
+watch(
+  () => currentScreen.value,
+  (screen) => {
+    if (screen === 'idle') {
+      hasStarted.value = false
+    }
+  }
+)
 
 function startFromIdle() {
   if (hasStarted.value) return
