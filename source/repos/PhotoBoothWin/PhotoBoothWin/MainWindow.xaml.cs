@@ -103,10 +103,6 @@ namespace PhotoBoothWin
 
                 Web.Source = new Uri("https://app/index.html");
 
-                BoothBridge.OpenWpfShootRequested = () => Dispatcher.Invoke(ShowWpfShoot);
-                BoothBridge.ReturnToWebViewRequested = () => Dispatcher.Invoke(HideWpfShoot);
-                BoothBridge.ReturnToWebAndStartSynthesisRequested = () => Dispatcher.Invoke(ReturnToWebAndStartSynthesis);
-
                 // 等待 WebView 完全加載後再啟動 RS232 監聽
                 Web.CoreWebView2.DOMContentLoaded += (s, e) =>
                 {
@@ -606,44 +602,6 @@ namespace PhotoBoothWin
                     // 單幀編碼失敗不影響後續
                 }
             });
-        }
-
-        private void ShowWpfShoot()
-        {
-            BoothBridge.IsWpfShootEmbedded = true;
-            WebViewPanel.Visibility = Visibility.Collapsed;
-            WpfShootPanel.Visibility = Visibility.Visible;
-            WpfFrame.Navigate(new PhotoBoothWin.Pages.TemplatePage());
-        }
-
-        private void HideWpfShoot()
-        {
-            BoothBridge.IsWpfShootEmbedded = false;
-            WpfShootPanel.Visibility = Visibility.Collapsed;
-            WebViewPanel.Visibility = Visibility.Visible;
-        }
-
-        /// <summary>WPF 拍完四張並選濾鏡後按「下一步」：回到 WebView，通知 Vue 用 load_captures 取圖並執行合成/上傳/QR。</summary>
-        private void ReturnToWebAndStartSynthesis()
-        {
-            // #region agent log
-            try { var lp = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Documents", "GitHub", "photobooth-kiosk", ".cursor", "debug.log"); System.IO.File.AppendAllText(lp, System.Text.Json.JsonSerializer.Serialize(new { location = "MainWindow.ReturnToWebAndStartSynthesis:entry", message = "entry", timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), hypothesisId = "H5" }) + "\n"); } catch { }
-            // #endregion
-            var vueTemplateId = BoothBridge.GetVueTemplateIdForSynthesis();
-            WpfShootPanel.Visibility = Visibility.Collapsed;
-            WebViewPanel.Visibility = Visibility.Visible;
-            try
-            {
-                var msg = JsonSerializer.Serialize(new { @event = "wpf_shoot_done", templateId = vueTemplateId });
-                Web.CoreWebView2?.PostWebMessageAsString(msg);
-                // #region agent log
-                try { var lp = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Documents", "GitHub", "photobooth-kiosk", ".cursor", "debug.log"); System.IO.File.AppendAllText(lp, System.Text.Json.JsonSerializer.Serialize(new { location = "MainWindow.ReturnToWebAndStartSynthesis:after_post", message = "PostWebMessageAsString done", timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), hypothesisId = "H5" }) + "\n"); } catch { }
-                // #endregion
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[WPF] 通知 Vue 合成失敗: {ex.Message}");
-            }
         }
 
         private void Grid_ContextMenuOpening(object sender, ContextMenuEventArgs e)

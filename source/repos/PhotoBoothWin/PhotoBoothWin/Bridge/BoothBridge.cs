@@ -21,23 +21,6 @@ namespace PhotoBoothWin.Bridge
         public static bool LiveViewPushToWeb { get; set; }
         private static int _pendingStartLiveView;
 
-        /// <summary>Vue 呼叫 open_wpf_shoot 時由 MainWindow 設定，用來切換到 WPF 拍照頁（10 秒倒數 + EDSDK）。</summary>
-        public static Action? OpenWpfShootRequested { get; set; }
-        /// <summary>WPF 拍照流程中「返回主畫面」時由 MainWindow 設定。</summary>
-        public static Action? ReturnToWebViewRequested { get; set; }
-        /// <summary>目前是否從 Vue 切換過來的 WPF 拍照流程（返回時回 Vue）。</summary>
-        public static bool IsWpfShootEmbedded { get; set; }
-
-        /// <summary>WPF 拍照流程中「下一步」在濾鏡模式按下時，由 MainWindow 設定：回到 WebView 並觸發 Vue 合成（load_captures → save_image/upload_file）。</summary>
-        public static Action? ReturnToWebAndStartSynthesisRequested { get; set; }
-
-        /// <summary>將 WPF 版型代碼（A/B/C）對應為 Vue 版型 id（bk01/bk02/bk03），供合成時使用。</summary>
-        public static string GetVueTemplateIdForSynthesis()
-        {
-            var wpfId = PhotoBoothWin.BoothStore.Current.TemplateId ?? "";
-            return wpfId switch { "A" => "bk01", "B" => "bk02", "C" => "bk03", _ => "bk01" };
-        }
-
         private static readonly HttpClient _http = new HttpClient()
         {
             Timeout = TimeSpan.FromSeconds(120), // 大圖上傳較久，避免逾時中斷
@@ -476,13 +459,6 @@ namespace PhotoBoothWin.Bridge
                             await CameraServiceProvider.Current.InitializeAsync().ConfigureAwait(false);
                             var isConnected = CameraServiceProvider.Current.IsConnected;
                             return Ok(req.id, new { isConnected });
-                        }
-
-                    case "open_wpf_shoot":
-                        {
-                            System.Diagnostics.Debug.WriteLine("[MainWindow] open_wpf_shoot 收到，切換到 WPF 拍照頁。");
-                            OpenWpfShootRequested?.Invoke();
-                            return Ok(req.id, new { });
                         }
 
                     case "upload":

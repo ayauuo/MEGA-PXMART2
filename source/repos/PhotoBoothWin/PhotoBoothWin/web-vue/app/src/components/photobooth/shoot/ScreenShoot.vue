@@ -310,9 +310,9 @@ async function stopLiveViewWithClear(reason: string) {
   // #endregion
 }
 
-/** 等待 Live View 重啟後收到「新幀」，逾時 5 秒（只以 frameCount 變化為準，避免舊幀 hasUrl 誤判 ready） */
+/** 等待 Live View 重啟後收到「新幀」，逾時時間縮短為 2 秒（只以 frameCount 變化為準，避免舊幀 hasUrl 誤判 ready） */
 function waitForLiveViewReady(frameCountBeforeRestart: number): Promise<void> {
-  const timeoutMs = 5000
+  const timeoutMs = 2000
   const intervalMs = 100
   const deadline = Date.now() + timeoutMs
   return new Promise((resolve) => {
