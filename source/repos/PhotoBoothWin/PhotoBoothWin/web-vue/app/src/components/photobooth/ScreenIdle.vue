@@ -59,6 +59,10 @@ watch(
 )
 
 function startFromIdle() {
+  // 若管理密碼視窗已打開（右上角長按叫出的 SecretKeypad），則忽略這次點擊，避免誤觸進入拍照頁
+  const overlay = document.querySelector('.secret-overlay') as HTMLElement | null
+  if (overlay) return
+
   if (hasStarted.value) return
   hasStarted.value = true
   unlockCountdownAudio()

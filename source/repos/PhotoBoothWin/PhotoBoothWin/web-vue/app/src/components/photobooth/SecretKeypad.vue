@@ -3,41 +3,48 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { usePhotobooth } from '@/composables/usePhotobooth'
 import { callHost } from '@/composables/useHost'
 
-const REQUIRED_TAPS = 15
-const TAP_RESET_MS = 1500
-const PASSWORD = '1234'
+const PRESS_MS = 5000
+const PASSWORD = '9347'
 
-const tapCount = ref(0)
-const lastTapAt = ref(0)
 const open = ref(false)
 const showKeypad = ref(true)
 const showMenu = ref(false)
 const input = ref('')
 const error = ref('')
 const uploadMessage = ref('')
+const isPressing = ref(false)
+let pressTimer: number | null = null
 
 const { showScreen, resetSession } = usePhotobooth()
 
-function resetTap() {
-  tapCount.value = 0
-  lastTapAt.value = 0
+function openAdmin() {
+  open.value = true
+  showKeypad.value = true
+  showMenu.value = false
+  input.value = ''
+  error.value = ''
 }
 
-function onHotspotClick() {
-  const now = Date.now()
-  if (lastTapAt.value && now - lastTapAt.value > TAP_RESET_MS) {
-    tapCount.value = 0
+function cancelPressTimer() {
+  isPressing.value = false
+  if (pressTimer != null) {
+    clearTimeout(pressTimer)
+    pressTimer = null
   }
-  lastTapAt.value = now
-  tapCount.value += 1
-  if (tapCount.value >= REQUIRED_TAPS) {
-    tapCount.value = 0
-    open.value = true
-    showKeypad.value = true
-    showMenu.value = false
-    input.value = ''
-    error.value = ''
-  }
+}
+
+function onHotspotPressStart() {
+  if (isPressing.value || open.value) return
+  isPressing.value = true
+  pressTimer = window.setTimeout(() => {
+    pressTimer = null
+    isPressing.value = false
+    openAdmin()
+  }, PRESS_MS)
+}
+
+function onHotspotPressEnd() {
+  cancelPressTimer()
 }
 
 function close() {
@@ -47,7 +54,6 @@ function close() {
   input.value = ''
   error.value = ''
   uploadMessage.value = ''
-  resetTap()
 }
 
 function appendDigit(digit: string) {
@@ -143,8 +149,17 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="secret-hotspot" @click="onHotspotClick" />
-  <div v-if="open" class="secret-overlay" role="dialog" aria-label="管理登入">
+  <div
+    class="secret-hotspot"
+    @click.stop.prevent
+    @mousedown.prevent="onHotspotPressStart"
+    @mouseup.prevent="onHotspotPressEnd"
+    @mouseleave.prevent="onHotspotPressEnd"
+    @touchstart.prevent.stop="onHotspotPressStart"
+    @touchend.prevent.stop="onHotspotPressEnd"
+    @touchcancel.prevent.stop="onHotspotPressEnd"
+  />
+  <div v-if="open" class="secret-overlay" role="dialog" aria-label="管理登入" @click.stop>
     <!-- 密碼鍵盤 -->
     <div v-if="showKeypad" class="secret-keypad">
       <div class="secret-title">請輸入密碼</div>
