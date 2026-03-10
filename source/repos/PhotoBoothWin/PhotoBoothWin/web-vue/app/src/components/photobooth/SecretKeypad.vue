@@ -4,7 +4,7 @@ import { usePhotobooth } from '@/composables/usePhotobooth'
 import { callHost } from '@/composables/useHost'
 
 const PRESS_MS = 5000
-const PASSWORD = '9347'
+const PASSWORD = '1234'
 
 const open = ref(false)
 const showKeypad = ref(true)
@@ -159,7 +159,7 @@ onUnmounted(() => {
     @touchend.prevent.stop="onHotspotPressEnd"
     @touchcancel.prevent.stop="onHotspotPressEnd"
   />
-  <div v-if="open" class="secret-overlay" role="dialog" aria-label="管理登入" @click.stop>
+  <div v-if="open" class="secret-overlay" role="dialog" aria-label="管理登入">
     <!-- 密碼鍵盤 -->
     <div v-if="showKeypad" class="secret-keypad">
       <div class="secret-title">請輸入密碼</div>

@@ -19,6 +19,8 @@ const {
 
 const copies = ref(1)
 const autoGoTimer = ref<ReturnType<typeof setTimeout> | null>(null)
+/** 防止重複點擊列印按鈕，點一次後即鎖定直到離開結果頁 */
+const isPrinting = ref(false)
 
 function getResultAutoPrintSec(): number {
   const raw = import.meta.env.VITE_RESULT_AUTO_PRINT_SEC
@@ -82,6 +84,8 @@ function clearAutoGoTimer() {
 
 /** 進入列印中 → 送 DNP（若未設 VITE_SKIP_PRINT）→ 寫入列印紀錄 CSV → 顯示 N 秒後回待機並還原 */
 function goToPrintingThenIdle() {
+  if (isPrinting.value) return
+  isPrinting.value = true
   const printingSec = getPrintingShowSec()
   const skipPrint = getSkipPrint()
   showScreen('processing')
@@ -151,8 +155,15 @@ watch(
 
 onBeforeUnmount(clearAutoGoTimer)
 
+// 進入結果頁時重置防重複點擊狀態
+watch(currentScreen, (screen) => {
+  if (screen === 'result') isPrinting.value = false
+})
+
 async function onPrint() {
   if (!finalFilePath.value) return
+  if (isPrinting.value) return
+  isPrinting.value = true
   clearAutoGoTimer()
   const skipPrint = getSkipPrint()
   let c = copies.value
@@ -229,7 +240,13 @@ async function onPrint() {
       </div>
       <div class="btns">
         <!-- 未來可加 print-btn--pulse 做跳動動畫 -->
-        <button type="button" class="print-btn" @click="onPrint">
+        <button
+          type="button"
+          class="print-btn"
+          :disabled="isPrinting"
+          :aria-disabled="isPrinting"
+          @click="onPrint"
+        >
           <img src="/assets/templates/QRcodePage/printbutton.png" alt="確認儲存完畢" />
         </button>
       </div>
@@ -377,6 +394,12 @@ async function onPrint() {
   border: none;
   background: none;
   cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+    pointer-events: none;
+  }
 
   img {
     width: 100%;

@@ -538,19 +538,6 @@ namespace PhotoBoothWin.Bridge
                     case "shutdown":
                         try
                         {
-                            const string testDir = @"C:\test";
-                            if (Directory.Exists(testDir))
-                            {
-                                foreach (var file in Directory.GetFiles(testDir))
-                                {
-                                    try { File.Delete(file); } catch { /* 忽略單一檔案刪除失敗 */ }
-                                }
-                                foreach (var subDir in Directory.GetDirectories(testDir))
-                                {
-                                    try { Directory.Delete(subDir, true); } catch { /* 忽略子目錄刪除失敗 */ }
-                                }
-                            }
-
                             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
                             {
                                 FileName = "shutdown",

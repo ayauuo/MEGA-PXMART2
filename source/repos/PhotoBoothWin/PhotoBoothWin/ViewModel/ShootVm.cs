@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.ComponentModel;
@@ -25,6 +25,9 @@ namespace PhotoBoothWin.ViewModel
 
         // UI 鎖定：重拍/拍攝倒數時會 false
         public bool IsUiEnabled { get; set; } = true;
+
+        /// <summary>下一步按鈕是否可點（按一次後變 false，按鈕半透明且不可再按）</summary>
+        public bool IsNextEnabled { get; set; } = true;
 
         // 模式允許縮圖點選（Review/Filter 才是 true）
         public bool AreThumbnailsClickable { get; set; } = false;
@@ -58,6 +61,7 @@ namespace PhotoBoothWin.ViewModel
             On(nameof(IsRetakeVisible));
             On(nameof(IsNextVisible));
             On(nameof(IsUiEnabled));
+            On(nameof(IsNextEnabled));
             On(nameof(AreThumbnailsClickable));
             On(nameof(CanClickThumbs));
             On(nameof(IsCountdownVisible));

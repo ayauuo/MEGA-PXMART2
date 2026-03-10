@@ -218,9 +218,19 @@
                     Visibility="{Binding IsRetakeVisible, Converter={StaticResource BoolToVis}}"
                     Click="OnRetake" IsEnabled="{Binding IsUiEnabled}"/>
 
-            <Button Content="下一步" Style="{StaticResource BottomBtnStyle}"
+            <Button x:Name="NextBtn" Content="下一步"
                     Visibility="{Binding IsNextVisible, Converter={StaticResource BoolToVis}}"
-                    Click="OnNext" IsEnabled="{Binding IsUiEnabled}"/>
+                    Click="OnNext" IsEnabled="{Binding IsNextEnabled}">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource BottomBtnStyle}">
+                        <Style.Triggers>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
         </StackPanel>
     </Grid>
 </Page>

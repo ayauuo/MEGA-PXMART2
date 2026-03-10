@@ -67,6 +67,7 @@ namespace PhotoBoothWin.Pages
         // 進入此畫面：隱藏濾鏡/重拍/下一步，直接開始拍4張（每張前倒數10）
         private async Task StartAutoShootAsync()
         {
+            vm.IsNextEnabled = true;
             SetModeShooting();
             _shotCount = 0;
             CameraCaptureStore.Clear();
@@ -353,6 +354,8 @@ namespace PhotoBoothWin.Pages
 
             if (vm.Mode == ShootMode.Filter)
             {
+                vm.IsNextEnabled = false;
+                vm.NotifyAll();
                 // #region agent log
                 try { var lp = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Documents", "GitHub", "photobooth-kiosk", ".cursor", "debug.log"); System.IO.File.AppendAllText(lp, System.Text.Json.JsonSerializer.Serialize(new { location = "ShootPage.OnNext:before_invoke", message = "Filter mode, calling ReturnToWebAndStartSynthesisRequested", timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), hypothesisId = "H1" }) + "\n"); } catch { }
                 // #endregion

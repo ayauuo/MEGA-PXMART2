@@ -5,6 +5,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -19,8 +20,11 @@ namespace PhotoBoothWin
         private ArduinoCoinAcceptor? _coinAcceptor;
         private bool _paymentsEnabled = true;
         private DateTime _lastLiveViewPost = DateTime.MinValue;
-        private const int LiveViewThrottleMs = 100;
+        /// <summary>Live View 推送節流（ms）。調大可減少長時間停留拍照頁時的記憶體與佇列堆積。</summary>
+        private const int LiveViewThrottleMs = 250;
         private int _liveViewFramesPushed;
+        /// <summary>尚未執行完的編碼/推送 callback 數量；超過上限時丟棄新幀，避免 Dispatcher 與 WebView 佇列堆積。</summary>
+        private int _liveViewPendingCallbacks;
 
         public MainWindow()
         {
@@ -571,16 +575,22 @@ namespace PhotoBoothWin
             }
             var now = DateTime.Now;
             if ((now - _lastLiveViewPost).TotalMilliseconds < LiveViewThrottleMs) return;
+            // 若已排隊的 callback 過多，丟棄本幀，避免長時間停留拍照頁時記憶體與佇列堆積
+            if (Interlocked.CompareExchange(ref _liveViewPendingCallbacks, 0, 0) >= 2)
+                return;
             // 若超過 2 秒沒推送過，視為新一輪 Live View，重設幀計數以便除錯日誌再印「第一幀」
             if ((now - _lastLiveViewPost).TotalSeconds > 2)
                 _liveViewFramesPushed = 0;
             _lastLiveViewPost = now;
 
+            Interlocked.Increment(ref _liveViewPendingCallbacks);
             Dispatcher.InvokeAsync(() =>
             {
-                if (!BoothBridge.LiveViewPushToWeb) return;
                 try
                 {
+                    if (Interlocked.Decrement(ref _liveViewPendingCallbacks) < 0)
+                        Interlocked.Increment(ref _liveViewPendingCallbacks);
+                    if (!BoothBridge.LiveViewPushToWeb) return;
                     using var mem = new MemoryStream();
                     var encoder = new JpegBitmapEncoder();
                     encoder.Frames.Add(BitmapFrame.Create(frame));
@@ -599,7 +609,7 @@ namespace PhotoBoothWin
                 }
                 catch
                 {
-                    // 單幀編碼失敗不影響後續
+                    // 已於 callback 開頭遞減，此處不再遞減
                 }
             });
         }
